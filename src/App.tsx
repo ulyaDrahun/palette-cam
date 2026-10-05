@@ -1,10 +1,82 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { HexColorPicker } from 'react-colorful'
 import './App.css'
+
+
 
 function App() {
   const [color, setColor] = useState('#d9c2a7')
   const [showPicker, setShowPicker] = useState(false)
+  const palette = [
+    '#5F7054',
+    '#8A9A7B',
+    color,
+    '#C5D5B4',
+    '#E3E8D8',
+  ]
+  const [showCamera, setShowCamera] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  useEffect(() => {
+    if (!showCamera) return
+  
+    const startCamera = async () => {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+      })
+  
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+      }
+    }
+  
+    startCamera()
+  }, [showCamera])
+
+  //Helper function rgb to Hex
+  const rgbToHex = (r: number, g: number, b: number) => {
+    return (
+      '#' +
+      [r, g, b]
+        .map((value) => value.toString(16).padStart(2, '0'))
+        .join('')
+    )
+  }
+
+  //Clicking on screen - monitoring pixel
+  const handleCameraClick = (
+    event: React.MouseEvent<HTMLVideoElement>
+  ) => {
+    const video = videoRef.current
+    const canvas = canvasRef.current
+  
+    if (!video || !canvas) return
+  
+    const rect = video.getBoundingClientRect()
+  
+    const x = event.clientX - rect.left
+    const y = event.clientY - rect.top
+  
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+  
+    const context = canvas.getContext('2d')
+  
+    if (!context) return
+  
+    context.drawImage(video, 0, 0, canvas.width, canvas.height)
+  
+    const pixel = context.getImageData(x, y, 1, 1).data
+
+    const [r, g, b] = pixel
+
+    const hex = rgbToHex(r, g, b)
+
+    console.log('Pixel:', pixel)
+    console.log('HEX:', hex)
+
+    setColor(hex)
+  }
 
   return (
     <main>
@@ -42,62 +114,50 @@ function App() {
         )}
 
       <div className="color-actions">
-        <button className="pick-button"
-          onClick = {()=> setShowPicker(!showPicker)}>
+        <button
+          className="pick-button"
+          onClick={() => setShowPicker(!showPicker)}
+        >
           Pick Colour
         </button>
 
-        <button className="camera-button">
+        <button
+          className="camera-button"
+          onClick={() => setShowCamera(true)}
+        >
           Colour Cam
         </button>
       </div>
+
+      {showCamera && (
+        <div className="camera-container">
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            onClick={handleCameraClick}
+          />
+          <canvas ref={canvasRef}></canvas>
+        </div>
+      )}
       </section>
 
-      <section> 
+      <section>
         <h2>Your palette</h2>
 
         <div className="palette">
+          {palette.map((paletteColor) => (
+            <div className="palette-item" key={paletteColor}>
+              <div
+                className="palette-color"
+                style={{ backgroundColor: paletteColor }}
+              ></div>
 
-          <div className="palette-item">
-            <div
-              className="palette-color"
-              style={{ backgroundColor: '#A8B5A2' }}
-            ></div>
-            <span className="hex-label">#A8B5A2</span>
-          </div>
-
-          <div className="palette-item">
-            <div
-              className="palette-color"
-              style={{ backgroundColor: '#C5D5B4' }}
-            ></div>
-            <span className="hex-label">#C5D5B4</span>
-          </div>
-
-          <div className="palette-item">
-            <div
-              className="palette-color"
-              style={{ backgroundColor: '#E3E8D8' }}
-            ></div>
-            <span className="hex-label">#E3E8D8</span>
-          </div>
-
-          <div className="palette-item">
-            <div
-              className="palette-color"
-              style={{ backgroundColor: '#8A9A7B' }}
-            ></div>
-            <span className="hex-label">#8A9A7B</span>
-          </div>
-
-          <div className="palette-item">
-            <div
-              className="palette-color"
-              style={{ backgroundColor: '#5F7054' }}
-            ></div>
-            <span className="hex-label">#5F7054</span>
-          </div>
-
+              <span className="hex-label">
+                {paletteColor.toUpperCase()}
+              </span>
+            </div>
+          ))}
         </div>
       </section>
     </main>
