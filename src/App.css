@@ -91,3 +91,29 @@ button {
   text-align: center;
   font-size: 16px;
 }
+
+.camera-container video {
+  transform: scaleX(-1);
+  display: block;
+  width: 100%;
+  max-width: 500px;
+  border-radius: 16px;
+}
+
+
+.harmony-options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 20px 0;
+}
+
+.harmony-options button {
+  background-color: #eeeeee;
+  color: #222222;
+}
+
+.harmony-options button:hover {
+  background-color: #dddddd;
+}
